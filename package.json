@@ -1,0 +1,20 @@
+{
+  "name": "ecsy-three-sandbox",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "snowpack dev"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ecsy": "^0.3.1",
+    "ecsy-three": "0.0.6",
+    "three": "^0.118.1"
+  },
+  "devDependencies": {
+    "snowpack": "^2.6.0",
+    "typescript": "^3.9.5"
+  }
+}

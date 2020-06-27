@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "run:tsc": "tsc --noEmit",
+    "run:tsc::watch": "$1 --watch",
+    "mount:site": "mount ./ --to /"
+  }
+}

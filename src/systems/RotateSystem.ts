@@ -6,7 +6,6 @@ export class RotateSystem extends ECSYThreeSystem {
     entities: { components: [RotateComponent, Object3DComponent] },
   };
 
-  // TODO: delta should get type checked on abstract class
   execute(dt: number) {
     const entities = this.queries.entities.results;
 

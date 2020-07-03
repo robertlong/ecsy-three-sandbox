@@ -40,7 +40,7 @@ class RotatingCubeExample extends App {
 
     const scene = world
       .createEntity()
-      .addObject3DComponent(new Scene(), false as any); // TODO: Make parent optional
+      .addObject3DComponent(new Scene());
 
     const cameraObj = new PerspectiveCamera();
     cameraObj.position.z = 5;

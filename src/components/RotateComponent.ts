@@ -2,12 +2,7 @@ import { Vector3 } from "three";
 import { Component, Types } from "ecsy";
 import { ThreeTypes } from "ecsy-three";
 
-interface RotateComponentProps {
-  axis?: Vector3; // NOTE: These are optional becase there are default values set.
-  speed?: number;
-}
-
-export class RotateComponent extends Component<RotateComponentProps> {
+export class RotateComponent extends Component<RotateComponent> {
   axis!: Vector3;
   speed!: number;
 

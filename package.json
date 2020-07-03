@@ -4,7 +4,9 @@
   "description": "",
   "private": true,
   "scripts": {
-    "start": "snowpack dev"
+    "start": "concurrently \"npm:serve\" \"npm:watch\"",
+    "serve": "es-dev-server --app-index index.html --node-resolve --watch --open",
+    "watch": "tsc --watch"
   },
   "author": "",
   "license": "ISC",
@@ -14,7 +16,8 @@
     "three": "^0.118.1"
   },
   "devDependencies": {
-    "snowpack": "^2.6.0",
+    "concurrently": "^5.2.0",
+    "es-dev-server": "^1.56.0",
     "typescript": "^3.9.5"
   }
 }

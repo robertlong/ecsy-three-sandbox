@@ -7,7 +7,7 @@ export class RotateComponent extends Component<RotateComponent> {
   speed!: number;
 
   static schema = {
-    axis: { type: ThreeTypes.Vector3Type, default: new Vector3(0, 1, 0) }, // TODO: this should just be ThreeTypes.Vector3
+    axis: { type: ThreeTypes.Vector3, default: new Vector3(0, 1, 0) }, // TODO: this should just be ThreeTypes.Vector3
     speed: { type: Types.Number, default: 0.001 },
   };
 }

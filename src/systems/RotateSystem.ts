@@ -13,7 +13,7 @@ export class RotateSystem extends ECSYThreeSystem {
       const entity = entities[i];
       const component = entity.getComponent(RotateComponent);
       const object = entity.getObject3D!();
-      object.rotateOnAxis(component.axis, component.speed * dt);
+      object.rotateOnAxis(component.axis.normalize(), component.speed * dt);
     }
   }
 }

@@ -1,12 +1,31 @@
-import { ECSYThreeWorld } from "ecsy-three";
+import {
+  ECSYThreeWorld,
+  Object3DComponent,
+  SceneTagComponent,
+  CameraTagComponent,
+  MeshTagComponent,
+  ECSYThreeEntity,
+} from "ecsy-three";
+import {
+  WebGLRenderer,
+  Scene,
+  PerspectiveCamera,
+} from "three";
+
+import { WebGLRendererComponent } from "./components/WebGLRendererComponent";
+import { WebXRComponent } from "./components/WebXRComponent";
 
 export class App {
   world: ECSYThreeWorld;
-  raf?: number;
-  lastTime: number;
+  scene: Scene;
+  sceneEntity: ECSYThreeEntity;
+  camera: PerspectiveCamera;
+  cameraEntity: ECSYThreeEntity;
+  renderer: WebGLRenderer;
+  rendererEntity: ECSYThreeEntity;
 
-  static run(...args: any[]) {
-    const app = new this(...args);
+  static run(canvas: HTMLCanvasElement) {
+    const app = new this(canvas);
 
     app
       .init()
@@ -18,27 +37,53 @@ export class App {
     return app;
   }
 
-  constructor(...args: any[]) {
+  constructor(canvas: HTMLCanvasElement) {
     this.world = new ECSYThreeWorld();
-    this.lastTime = 0;
+
+    this.world
+      .registerComponent(Object3DComponent)
+      .registerComponent(SceneTagComponent)
+      .registerComponent(MeshTagComponent)
+      .registerComponent(CameraTagComponent)
+      .registerComponent(WebGLRendererComponent, false)
+      .registerComponent(WebXRComponent, false);
+
+    this.scene = new Scene();
+    this.sceneEntity = this.world.createEntity().addObject3DComponent(this.scene);
+
+    this.camera = new PerspectiveCamera();
+    
+
+    this.cameraEntity = this.world.createEntity().addObject3DComponent(this.camera, this.sceneEntity);
+
+    this.renderer = new WebGLRenderer({
+      antialias: true,
+      canvas
+    });
+
+    this.renderer.xr.enabled = true;
+
+    this.rendererEntity = this.world
+      .createEntity()
+      .addComponent(WebGLRendererComponent, {
+        renderer: this.renderer,
+        scene: this.sceneEntity,
+        camera: this.cameraEntity,
+      })
+      .addComponent(WebXRComponent);
   }
 
   async init() {}
 
   play() {
-    this.lastTime = performance.now();
-    this.raf = requestAnimationFrame(this.update);
+    this.renderer.setAnimationLoop(this.update);
   }
 
   pause() {
-    cancelAnimationFrame(this.raf as number);
+    this.renderer.setAnimationLoop(null);
   }
 
-  update = (time: number) => {
-    const dt = time - this.lastTime;
-    this.lastTime = time;
-    // TODO: delta and time should be optional
-    this.world.execute(dt, time);
-    requestAnimationFrame(this.update);
+  update = () => {
+    this.world.execute();
   };
 }

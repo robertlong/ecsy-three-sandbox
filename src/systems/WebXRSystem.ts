@@ -1,10 +1,10 @@
-import { ECSYThreeSystem, ECSYThreeObject3D } from "ecsy-three";
+import { ECSYThreeSystem } from "ecsy-three";
 import { Event as ThreeEvent } from "three";
 import { WebXRControllerComponent } from "../components/WebXRControllerComponent";
-import { InputFrameComponent } from "../components/InputFrameComponent";
+import { InputFrameComponent, InputFrameValue, InputFrame } from "../components/InputFrameComponent";
 import { WebXRSystemComponent } from "../components/WebXRSystemComponent";
 
-function createControllerInputHandler(inputFrame: { [key: string]: any }, key: string, value: any) {
+function createControllerInputHandler(inputFrame: InputFrame, key: string, value: InputFrameValue) {
   return (event: ThreeEvent) => {
     const entity = event.target.entity;
 
@@ -14,7 +14,7 @@ function createControllerInputHandler(inputFrame: { [key: string]: any }, key: s
 
     const controller = entity.getComponent(WebXRControllerComponent);
 
-    inputFrame.xr[controller.id][key] = value;
+    inputFrame[controller.id][key] = value;
   };
 }
 
@@ -48,8 +48,6 @@ export class WebXRSystem extends ECSYThreeSystem {
 
     const inputFrame = inputFrameEntity.getComponent(InputFrameComponent).frame;
 
-    inputFrame.xr = {};
-
     const controllerEntities = this.queries.controllerEntities.results;
 
     for (let i = 0; i < controllerEntities.length; i++) {
@@ -73,13 +71,13 @@ export class WebXRSystem extends ECSYThreeSystem {
         if (entity) {
           const controller = entity.getComponent(WebXRControllerComponent);
           controller.connected = false;
-          inputFrame.xr[controller.id].select = false;
-          inputFrame.xr[controller.id].squeeze = false;
+          inputFrame[controller.id].select = false;
+          inputFrame[controller.id].squeeze = false;
         }
       });
 
       const controller = entity.getComponent(WebXRControllerComponent);
-      inputFrame.xr[controller.id] = {
+      inputFrame[controller.id] = {
         select: false,
         squeeze: false
       };

@@ -93,12 +93,12 @@ export class App {
     const rightControllerRayObj = this.renderer.xr.getController(0);
     const rightControllerGripObj = this.renderer.xr.getControllerGrip(0);
     const rightControllerGripEntity = this.world.createEntity().addObject3DComponent(rightControllerGripObj, this.sceneEntity);
-    this.rightControllerEntity = this.world.createEntity().addObject3DComponent(rightControllerRayObj, this.sceneEntity).addComponent(WebXRControllerComponent, { index: 0, id: "right", grip: rightControllerGripEntity });
+    this.rightControllerEntity = this.world.createEntity().addObject3DComponent(rightControllerRayObj, this.sceneEntity).addComponent(WebXRControllerComponent, { index: 0, id: "rightHandController", grip: rightControllerGripEntity });
     
     const leftControllerRayObj = this.renderer.xr.getController(1);
     const leftControllerGripObj = this.renderer.xr.getControllerGrip(1);
     const leftControllerGripEntity = this.world.createEntity().addObject3DComponent(leftControllerGripObj, this.sceneEntity);
-    this.leftControllerEntity = this.world.createEntity().addObject3DComponent(leftControllerRayObj, this.sceneEntity).addComponent(WebXRControllerComponent, { index: 1, id: "left", grip: leftControllerGripEntity });
+    this.leftControllerEntity = this.world.createEntity().addObject3DComponent(leftControllerRayObj, this.sceneEntity).addComponent(WebXRControllerComponent, { index: 1, id: "leftHandController", grip: leftControllerGripEntity });
   }
 
   async init() {}

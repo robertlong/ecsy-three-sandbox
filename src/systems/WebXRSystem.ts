@@ -80,7 +80,8 @@ export class WebXRSystem extends ECSYThreeSystem {
 
       const controller = entity.getComponent(WebXRControllerComponent);
       inputFrame.xr[controller.id] = {
-        select: false
+        select: false,
+        squeeze: false
       };
     }
   }

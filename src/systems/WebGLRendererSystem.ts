@@ -1,4 +1,4 @@
-import { ECSYThreeSystem, Object3DComponent } from "ecsy-three";
+import { ECSYThreeSystem } from "ecsy-three";
 import { PerspectiveCamera } from "three";
 import { WebGLRendererComponent } from "../components/WebGLRendererComponent";
 

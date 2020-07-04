@@ -1,28 +1,87 @@
-import { ECSYThreeSystem, Object3DComponent } from "ecsy-three";
-import { VRButton } from "three/examples/jsm/webxr/VRButton";
-import { WebGLRendererComponent } from "../components/WebGLRendererComponent";
-import { WebXRComponent } from "../components/WebXRComponent";
+import { ECSYThreeSystem, ECSYThreeObject3D } from "ecsy-three";
+import { Event as ThreeEvent } from "three";
+import { WebXRControllerComponent } from "../components/WebXRControllerComponent";
+import { InputFrameComponent } from "../components/InputFrameComponent";
+import { WebXRSystemComponent } from "../components/WebXRSystemComponent";
+
+function createControllerInputHandler(inputFrame: { [key: string]: any }, key: string, value: any) {
+  return (event: ThreeEvent) => {
+    const entity = event.target.entity;
+
+    if (!entity) {
+      return;
+    }
+
+    const controller = entity.getComponent(WebXRControllerComponent);
+
+    inputFrame.xr[controller.id][key] = value;
+  };
+}
 
 export class WebXRSystem extends ECSYThreeSystem {
   static queries = {
-    entities: { components: [WebGLRendererComponent, WebXRComponent] },
+    webxrSystemEntities: { components: [WebXRSystemComponent] },
+    controllerEntities: { components: [WebXRControllerComponent] },
+    inputFrameEntities: { components: [InputFrameComponent] }
   };
 
   execute() {
-    const entities = this.queries.entities.results;
+    const webxrSystemEntity = this.queries.webxrSystemEntities.results[0];
 
-    for (let i = 0; i < entities.length; i++) {
-      const entity = entities[i];
-      const webxrComponent = entity.getComponent(WebXRComponent);
-     
-      if (!webxrComponent.initialized) {
-        const rendererComponent = entity.getComponent(WebGLRendererComponent);
-        const renderer = rendererComponent.renderer;
-        const el = VRButton.createButton(renderer);
-        renderer.domElement.parentElement?.appendChild(el);
-        webxrComponent.buttonEl = el;
-        webxrComponent.initialized = true;
-      }
+    if (!webxrSystemEntity) {
+      return;
+    }
+
+    const inputFrameEntity = this.queries.inputFrameEntities.results[0];
+
+    if (!inputFrameEntity) {
+      throw new Error("WebXRSystem requires an InputFrameComponent to write to");
+    }
+
+    const systemState = webxrSystemEntity.getComponent(WebXRSystemComponent);
+
+    if (systemState.initialized) {
+      return;
+    }
+
+    systemState.initialized = true;
+
+    const inputFrame = inputFrameEntity.getComponent(InputFrameComponent).frame;
+
+    inputFrame.xr = {};
+
+    const controllerEntities = this.queries.controllerEntities.results;
+
+    for (let i = 0; i < controllerEntities.length; i++) {
+      const entity = controllerEntities[i];
+      const object = entity.getObject3D!();
+      object.addEventListener("selectstart", createControllerInputHandler(inputFrame, "select", true));
+      object.addEventListener("squeezestart", createControllerInputHandler(inputFrame, "squeeze", true));
+      object.addEventListener("selectend", createControllerInputHandler(inputFrame, "select", false));
+      object.addEventListener("squeezeend", createControllerInputHandler(inputFrame, "squeeze", false));
+      object.addEventListener("connected", (event) => {
+        const entity = event.target.entity;
+
+        if (entity) {
+          const controller = entity.getComponent(WebXRControllerComponent);
+          controller.connected = true;
+        }
+      });
+      object.addEventListener("disconnected", (event) => {
+        const entity = event.target.entity;
+
+        if (entity) {
+          const controller = entity.getComponent(WebXRControllerComponent);
+          controller.connected = false;
+          inputFrame.xr[controller.id].select = false;
+          inputFrame.xr[controller.id].squeeze = false;
+        }
+      });
+
+      const controller = entity.getComponent(WebXRControllerComponent);
+      inputFrame.xr[controller.id] = {
+        select: false
+      };
     }
   }
 }

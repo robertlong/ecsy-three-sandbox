@@ -12,8 +12,15 @@ import {
   PerspectiveCamera,
 } from "three";
 
+import { VRButton } from "three/examples/jsm/webxr/VRButton";
+
 import { WebGLRendererComponent } from "./components/WebGLRendererComponent";
-import { WebXRComponent } from "./components/WebXRComponent";
+import { WebXRControllerComponent } from "./components/WebXRControllerComponent";
+import { InputFrameComponent } from "./components/InputFrameComponent";
+import { WebXRSystemComponent } from "./components/WebXRSystemComponent";
+
+import { WebGLRendererSystem } from "./systems/WebGLRendererSystem";
+import { WebXRSystem } from "./systems/WebXRSystem";
 
 export class App {
   world: ECSYThreeWorld;
@@ -23,6 +30,8 @@ export class App {
   cameraEntity: ECSYThreeEntity;
   renderer: WebGLRenderer;
   rendererEntity: ECSYThreeEntity;
+  leftControllerEntity: ECSYThreeEntity;
+  rightControllerEntity: ECSYThreeEntity;
 
   static run(canvas: HTMLCanvasElement) {
     const app = new this(canvas);
@@ -30,6 +39,10 @@ export class App {
     app
       .init()
       .then(() => {
+        // TODO: Allow registering systems with before/after hooks.
+        app.world
+          .registerSystem(WebXRSystem)
+          .registerSystem(WebGLRendererSystem);
         app.play();
       })
       .catch(console.error);
@@ -46,14 +59,14 @@ export class App {
       .registerComponent(MeshTagComponent)
       .registerComponent(CameraTagComponent)
       .registerComponent(WebGLRendererComponent, false)
-      .registerComponent(WebXRComponent, false);
+      .registerComponent(WebXRControllerComponent, false)
+      .registerComponent(WebXRSystemComponent)
+      .registerComponent(InputFrameComponent, false);
 
     this.scene = new Scene();
     this.sceneEntity = this.world.createEntity().addObject3DComponent(this.scene);
 
     this.camera = new PerspectiveCamera();
-    
-
     this.cameraEntity = this.world.createEntity().addObject3DComponent(this.camera, this.sceneEntity);
 
     this.renderer = new WebGLRenderer({
@@ -63,6 +76,9 @@ export class App {
 
     this.renderer.xr.enabled = true;
 
+    const el = VRButton.createButton(this.renderer);
+    this.renderer.domElement.parentElement?.appendChild(el);
+
     this.rendererEntity = this.world
       .createEntity()
       .addComponent(WebGLRendererComponent, {
@@ -70,7 +86,19 @@ export class App {
         scene: this.sceneEntity,
         camera: this.cameraEntity,
       })
-      .addComponent(WebXRComponent);
+      .addComponent(WebXRSystemComponent)
+      .addComponent(InputFrameComponent);
+
+    // I want to be able to add components to these entities in init, so rather than doing this in a system, I'm doing it here.
+    const rightControllerRayObj = this.renderer.xr.getController(0);
+    const rightControllerGripObj = this.renderer.xr.getControllerGrip(0);
+    const rightControllerGripEntity = this.world.createEntity().addObject3DComponent(rightControllerGripObj, this.sceneEntity);
+    this.rightControllerEntity = this.world.createEntity().addObject3DComponent(rightControllerRayObj, this.sceneEntity).addComponent(WebXRControllerComponent, { index: 0, id: "right", grip: rightControllerGripEntity });
+    
+    const leftControllerRayObj = this.renderer.xr.getController(1);
+    const leftControllerGripObj = this.renderer.xr.getControllerGrip(1);
+    const leftControllerGripEntity = this.world.createEntity().addObject3DComponent(leftControllerGripObj, this.sceneEntity);
+    this.leftControllerEntity = this.world.createEntity().addObject3DComponent(leftControllerRayObj, this.sceneEntity).addComponent(WebXRControllerComponent, { index: 1, id: "left", grip: leftControllerGripEntity });
   }
 
   async init() {}

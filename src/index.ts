@@ -8,16 +8,19 @@ import { RotateSystem } from "./systems/RotateSystem";
 import { OrbitControlsComponent } from "./components/OrbitControlsComponent";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { WebXRControllerComponent } from "./components/WebXRControllerComponent";
+import { PhysicsSystem } from "./systems/PhysicsSystem";
 
 class RotatingCubeExample extends App {
   async init() {
+    await PhysicsSystem.load();
+
     const world = this.world;
 
     world
       .registerComponent(RotateComponent)
       .registerComponent(OrbitControlsComponent, false);
 
-    world.registerSystem(RotateSystem);
+    world.registerSystem(PhysicsSystem).registerSystem(RotateSystem);
       
     this.camera.position.z = 5;
 

@@ -1,8 +1,9 @@
 {
-  "include": ["./src"],
+  "include": ["./src", "vendor/ammo.wasm.d.ts"],
   "compilerOptions": {
     "strict": true,
     "target": "ES2019",
+    "module": "ESNext",
     "lib": ["DOM", "ES2020"],
     "moduleResolution": "node",
     "outDir": "./dist"

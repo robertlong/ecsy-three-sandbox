@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "start": "concurrently \"npm:serve\" \"npm:watch\"",
-    "serve": "es-dev-server --app-index index.html --node-resolve --watch --compatibility min --open",
+    "serve": "es-dev-server --app-index index.html --node-resolve --watch --compatibility min --open --config ./es-dev-server.js",
     "watch": "tsc --watch"
   },
   "author": "",
@@ -16,8 +16,10 @@
     "three": "^0.118.1"
   },
   "devDependencies": {
+    "@types/emscripten": "^1.39.4",
     "concurrently": "^5.2.0",
     "es-dev-server": "^1.56.0",
+    "omt-server-plugin": "0.0.3",
     "typescript": "^3.9.5"
   }
 }

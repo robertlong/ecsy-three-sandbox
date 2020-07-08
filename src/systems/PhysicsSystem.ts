@@ -1,7 +1,18 @@
+import { PhysicsWorkerMessage, UpdateSimulationMessage } from "../physics/PhysicsWorker";
+import { RigidBodyComponent } from "../components/RigidBodyComponent";
 import { System } from "ecsy";
-import { PhysicsWorkerMessage } from "../physics/PhysicsWorker";
-let physicsWorker: any;
+
+
+let physicsWorker: Worker;
 let loadingPromise: any;
+let nextShapeId: number = 1;
+let nextRigidBodyId: number = 1;
+
+function copyIntoArray(src: ArrayLike<any>, dest: any[], offset: number) {
+  for (let i = 0; i < dest.length; i++) {
+    dest[i] = src[offset + i];
+  }
+}
 
 export class PhysicsSystem extends System {
   // You must call PhysicsSystem.load() directly with the path to the physics worker script and ammo WASM url.
@@ -16,6 +27,10 @@ export class PhysicsSystem extends System {
           if (message.type !== "initialized") {
             return;
           }
+
+          worker.postMessage({
+            type: "play"
+          });
 
           physicsWorker = worker;
           worker.removeEventListener("message", onMessage);
@@ -38,10 +53,75 @@ export class PhysicsSystem extends System {
     return loadingPromise;
   }
 
-  execute() {
+  static queries = {
+    rigidBodies: { components: [RigidBodyComponent] }
+  };
+
+  initializedWorker: boolean = false;
+  buffer?: ArrayBuffer;
+  f32BufferView?: Float32Array;
+
+  onMessage = (event: MessageEvent) => {
+    const message = event.data as PhysicsWorkerMessage;
+
+
+    if (message.type === "update") {
+      this.buffer = (message as UpdateSimulationMessage).buffer;
+      this.f32BufferView = new Float32Array(this.buffer);
+    }
+  }
+
+  execute(dt: number, time: number) {
     // Dont run if the PhysicsWorker hasn't been loaded yet.
     if (!physicsWorker) {
       return;
+    }
+
+    if (!this.initializedWorker) {
+      physicsWorker.addEventListener("message", this.onMessage);
+      this.initializedWorker = true;
+    }
+
+    const rigidBodyEntities = this.queries.rigidBodies.results;
+
+    for (let i = 0; i < rigidBodyEntities.length; i++) {
+      const entity = rigidBodyEntities[i];
+      const rigidBody = entity.getComponent(RigidBodyComponent);
+
+      if (rigidBody.id === 0) {
+        const shape = rigidBody.shape;
+
+        if (shape.id === 0) {
+          shape.id = nextShapeId++;
+
+          physicsWorker.postMessage({
+            type: "createShape",
+            ...shape.toJSON()
+          });
+        }
+
+        rigidBody.id = nextRigidBodyId++;
+
+        physicsWorker.postMessage({
+          type: "createRigidBody",
+          ...rigidBody.toJSON()
+        });
+      }
+
+      if (rigidBody.id > 0 && this.f32BufferView) {
+        copyIntoArray(this.f32BufferView, rigidBody.position, (rigidBody.id - 1) * 7);
+        copyIntoArray(this.f32BufferView, rigidBody.rotation, (rigidBody.id - 1) * 7 + 3);
+      }
+    }
+
+    if (this.buffer) {
+      physicsWorker.postMessage({
+        type: "update",
+        buffer: this.buffer
+      });
+  
+      this.buffer = undefined;
+      this.f32BufferView = undefined;
     }
   }
 }

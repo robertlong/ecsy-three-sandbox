@@ -1,40 +1,5 @@
 import { Component, Types } from "ecsy";
-
-const identityMatrix = [
-  1, 0, 0, 0,
-  0, 1, 0, 0,
-  0, 0, 1, 0,
-  0, 0, 0, 1
-];
-
-export class CollisionShape {
-  id: number = 0;
-
-  toJSON(): {} {
-    return {};
-  }
-}
-
-export class BoxShape extends CollisionShape {
-  id: number
-  shapeType: string;
-  halfExtents: number[]
-
-  constructor(halfExtents: number[]) {
-    super();
-    this.id = 0;
-    this.shapeType = "box";
-    this.halfExtents = halfExtents;
-  }
-
-  toJSON() {
-    return {
-      id: this.id,
-      shapeType: this.shapeType,
-      halfExtents: this.halfExtents
-    };
-  }
-}
+import { CollisionShape } from "../physics/CollisionShape"; 
 
 export class RigidBodyComponent extends Component<RigidBodyComponent> {
   id!: number;

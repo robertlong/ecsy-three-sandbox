@@ -81,7 +81,7 @@ class PhysicsWorker {
     this.messageQueue = [];
     this.enabled = false;
     this.tempTransform = new Ammo.btTransform();
-    this.buffer = new ArrayBuffer(Float32Array.BYTES_PER_ELEMENT * 7 * 2);
+    this.buffer = new ArrayBuffer(Float32Array.BYTES_PER_ELEMENT * 7 * 128);
     this.f32BufferView = new Float32Array(this.buffer);
     (self as unknown as Worker).addEventListener("message", this.onMessage);
     this.update();
@@ -103,6 +103,8 @@ class PhysicsWorker {
       const [x, y, z] = message.halfExtents;
       const halfExtents = new Ammo.btVector3(x, y, z);
       shape = new Ammo.btBoxShape(halfExtents);
+    } else if (message.shapeType === "sphere") {
+      shape = new Ammo.btSphereShape(message.radius);
     }
     
     if (shape) {
@@ -132,15 +134,22 @@ class PhysicsWorker {
 
     const collisionShape = this.shapes[message.shapeId];
 
-    let localInertia: btVector3 | undefined = undefined;
+    let localInertia: btVector3;
 
     if (message.localInertia) {
       const [x, y, z] = message.localInertia;
       localInertia = new Ammo.btVector3(x, y, z);
+    } else {
+      localInertia = new Ammo.btVector3(0, 0, 0);
     }
+
+    collisionShape.calculateLocalInertia(message.mass, localInertia);
     
     const bodyInfo = new Ammo.btRigidBodyConstructionInfo(message.mass, motionState, collisionShape, localInertia);
     const body = new Ammo.btRigidBody(bodyInfo);
+
+    body.activate();
+
     this.dynamicsWorld.addRigidBody(body);
 
     this.rigidBodies[message.id] = body;

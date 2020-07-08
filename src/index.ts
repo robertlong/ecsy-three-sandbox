@@ -5,7 +5,15 @@ import {
   Vector3,
   PlaneBufferGeometry,
   MathUtils,
+  UnsignedByteType,
+  DataTexture,
+  PMREMGenerator,
+  ACESFilmicToneMapping,
+  sRGBEncoding
 } from "three";
+
+import { GLTFLoader, GLTF } from "three/examples/jsm/loaders/GLTFLoader";
+import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
 
 import { App } from "./App";
 
@@ -18,11 +26,36 @@ import { WebXRControllerComponent } from "./components/WebXRControllerComponent"
 import { PhysicsSystem } from "./systems/PhysicsSystem";
 import { RigidBodyInitializationSystem } from "./systems/RigidBodyInitializationSystem";
 import { RigidBodyTransformSystem } from "./systems/RigidBodyTransformSystem";
-import { RigidBodyComponent, BoxShape } from "./components/RigidBodyComponent";
+import { RigidBodyComponent } from "./components/RigidBodyComponent";
+import { ThreeBoundingSphereShape, ThreeBoundingBoxShape, ThreePlaneShape } from "./physics/ThreeCollisionShape";
 
 class RotatingCubeExample extends App {
   async init() {
-    await PhysicsSystem.load();
+    const [_, envTexture, { scene: helmet }] = await Promise.all<void, DataTexture, GLTF>([
+      PhysicsSystem.load(),
+      new RGBELoader()
+        .setDataType(UnsignedByteType)
+        .setPath('assets/textures/environment/')
+        .loadAsync('royal_esplanade_1k.hdr'),
+      new GLTFLoader()
+        .setPath("assets/models/DamagedHelmet/")
+        .loadAsync("DamagedHelmet.glb")
+    ]);
+
+    this.renderer.toneMapping = ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1;
+    this.renderer.outputEncoding = sRGBEncoding;
+
+    const pmremGenerator = new PMREMGenerator(this.renderer);
+		pmremGenerator.compileEquirectangularShader();
+
+    const envMap = pmremGenerator.fromEquirectangular(envTexture).texture;
+
+    this.scene.environment = envMap;
+    this.scene.background = envMap;
+
+    envTexture.dispose();
+		pmremGenerator.dispose();
 
     const world = this.world;
 
@@ -82,7 +115,7 @@ class RotatingCubeExample extends App {
     world
       .createEntity()
       .addObject3DComponent(ground, this.sceneEntity)
-      .addComponent(RigidBodyComponent, { shape: new BoxShape([5, 5, 0.001]) });
+      .addComponent(RigidBodyComponent, { shape: new ThreePlaneShape(ground) });
 
     const box = new Mesh(
       new BoxBufferGeometry(1, 1, 1),
@@ -90,11 +123,20 @@ class RotatingCubeExample extends App {
     );
 
     box.position.y = 3;
+    box.position.z = -0.5
 
     world
       .createEntity()
       .addObject3DComponent(box, this.sceneEntity)
-      .addComponent(RigidBodyComponent, { shape: new BoxShape([0.5, 0.5, 0.5]), mass: 1 });
+      .addComponent(RigidBodyComponent, { shape: new ThreeBoundingBoxShape(box), mass: 1 });
+
+    helmet.position.set(0.5, 1, -0.3);
+    helmet.scale.set(0.25, 0.25, 0.25)
+
+    world
+      .createEntity()
+      .addObject3DComponent(helmet, this.sceneEntity)
+      .addComponent(RigidBodyComponent, { shape: new ThreeBoundingSphereShape(helmet) });
   }
 }
 

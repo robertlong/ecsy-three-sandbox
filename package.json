@@ -8,8 +8,8 @@
     "serve": "es-dev-server --app-index index.html --node-resolve --watch --compatibility min --open --config ./es-dev-server.js",
     "watch": "tsc --watch"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Robert Long",
+  "license": "MIT",
   "dependencies": {
     "ecsy": "git+https://github.com/MozillaReality/ecsy.git#dev",
     "ecsy-three": "git+https://github.com/MozillaReality/ecsy-three.git#dev",

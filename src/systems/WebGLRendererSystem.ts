@@ -35,6 +35,7 @@ export class WebGLRendererSystem extends ECSYThreeSystem {
       }
 
       renderer.render(scene, camera);
+      renderer.shadowMap.autoUpdate = false;
     }
   }
 }

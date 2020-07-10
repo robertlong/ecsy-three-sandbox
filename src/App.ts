@@ -10,6 +10,7 @@ import {
   WebGLRenderer,
   Scene,
   PerspectiveCamera,
+  Group,
 } from "three";
 
 import { VRButton } from "three/examples/jsm/webxr/VRButton";
@@ -26,6 +27,8 @@ export class App {
   world: ECSYThreeWorld;
   scene: Scene;
   sceneEntity: ECSYThreeEntity;
+  player: Group;
+  playerEntity: ECSYThreeEntity;
   camera: PerspectiveCamera;
   cameraEntity: ECSYThreeEntity;
   renderer: WebGLRenderer;
@@ -39,10 +42,6 @@ export class App {
     app
       .init()
       .then(() => {
-        // TODO: Allow registering systems with before/after hooks.
-        app.world
-          .registerSystem(WebXRSystem)
-          .registerSystem(WebGLRendererSystem);
         app.play();
       })
       .catch(console.error);
@@ -66,8 +65,14 @@ export class App {
     this.scene = new Scene();
     this.sceneEntity = this.world.createEntity().addObject3DComponent(this.scene);
 
+    this.player = new Group();
+    this.player.name = "Player";
+    this.playerEntity = this.world.createEntity().addObject3DComponent(this.player, this.sceneEntity);
+
     this.camera = new PerspectiveCamera();
-    this.cameraEntity = this.world.createEntity().addObject3DComponent(this.camera, this.sceneEntity);
+    this.camera.name = "MainCamera";
+    this.camera.position.y = 1.6;
+    this.cameraEntity = this.world.createEntity().addObject3DComponent(this.camera, this.playerEntity);
 
     this.renderer = new WebGLRenderer({
       antialias: true,
@@ -91,14 +96,18 @@ export class App {
 
     // I want to be able to add components to these entities in init, so rather than doing this in a system, I'm doing it here.
     const rightControllerRayObj = this.renderer.xr.getController(0);
+    rightControllerRayObj.name = "RightControllerRay";
     const rightControllerGripObj = this.renderer.xr.getControllerGrip(0);
-    const rightControllerGripEntity = this.world.createEntity().addObject3DComponent(rightControllerGripObj, this.sceneEntity);
-    this.rightControllerEntity = this.world.createEntity().addObject3DComponent(rightControllerRayObj, this.sceneEntity).addComponent(WebXRControllerComponent, { index: 0, id: "rightHandController", grip: rightControllerGripEntity });
+    rightControllerRayObj.name = "RightControllerGrip";
+    const rightControllerGripEntity = this.world.createEntity().addObject3DComponent(rightControllerGripObj, this.playerEntity);
+    this.rightControllerEntity = this.world.createEntity().addObject3DComponent(rightControllerRayObj, this.playerEntity).addComponent(WebXRControllerComponent, { index: 0, id: "rightHandController", grip: rightControllerGripEntity });
     
     const leftControllerRayObj = this.renderer.xr.getController(1);
+    leftControllerRayObj.name = "LeftControllerRay";
     const leftControllerGripObj = this.renderer.xr.getControllerGrip(1);
-    const leftControllerGripEntity = this.world.createEntity().addObject3DComponent(leftControllerGripObj, this.sceneEntity);
-    this.leftControllerEntity = this.world.createEntity().addObject3DComponent(leftControllerRayObj, this.sceneEntity).addComponent(WebXRControllerComponent, { index: 1, id: "leftHandController", grip: leftControllerGripEntity });
+    leftControllerGripObj.name = "LeftControllerGrip";
+    const leftControllerGripEntity = this.world.createEntity().addObject3DComponent(leftControllerGripObj, this.playerEntity);
+    this.leftControllerEntity = this.world.createEntity().addObject3DComponent(leftControllerRayObj, this.playerEntity).addComponent(WebXRControllerComponent, { index: 1, id: "leftHandController", grip: leftControllerGripEntity });
   }
 
   async init() {}

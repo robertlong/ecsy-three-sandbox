@@ -22,6 +22,7 @@ import { WebXRSystemComponent } from "./components/WebXRSystemComponent";
 
 import { WebGLRendererSystem } from "./systems/WebGLRendererSystem";
 import { WebXRSystem } from "./systems/WebXRSystem";
+import { PlayerTagComponent } from "./components/PlayerTagComponent";
 
 export class App {
   world: ECSYThreeWorld;
@@ -57,6 +58,7 @@ export class App {
       .registerComponent(SceneTagComponent)
       .registerComponent(MeshTagComponent)
       .registerComponent(CameraTagComponent)
+      .registerComponent(PlayerTagComponent)
       .registerComponent(WebGLRendererComponent, false)
       .registerComponent(WebXRControllerComponent, false)
       .registerComponent(WebXRSystemComponent)
@@ -67,7 +69,7 @@ export class App {
 
     this.player = new Group();
     this.player.name = "Player";
-    this.playerEntity = this.world.createEntity().addObject3DComponent(this.player, this.sceneEntity);
+    this.playerEntity = this.world.createEntity().addObject3DComponent(this.player, this.sceneEntity).addComponent(PlayerTagComponent);
 
     this.camera = new PerspectiveCamera();
     this.camera.name = "MainCamera";

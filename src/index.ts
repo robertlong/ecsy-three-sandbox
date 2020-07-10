@@ -14,11 +14,16 @@ import {
   TextureLoader,
   NearestFilter,
   VSMShadowMap,
+  PCFSoftShadowMap,
+  BasicShadowMap,
   Color,
   SphereBufferGeometry,
   ShaderMaterial,
   BackSide,
-  AmbientLight
+  AmbientLight,
+  Euler,
+  DirectionalLightHelper,
+  CameraHelper
 } from "three";
 
 import { GLTFLoader, GLTF } from "three/examples/jsm/loaders/GLTFLoader";
@@ -36,34 +41,113 @@ import { RigidBodyInitializationSystem } from "./systems/RigidBodyInitialization
 import { RigidBodyTransformSystem } from "./systems/RigidBodyTransformSystem";
 import { RigidBodyComponent } from "./components/RigidBodyComponent";
 import { ThreeBoundingBoxShape } from "./physics/ThreeCollisionShape";
-import { StaticShadowMapSystem } from "./systems/StaticShadowMapSystem";
+import { SunlightComponent } from "./components/SunlightComponent";
+import { SkyboxComponent } from "./components/SkyboxComponent";
+import { DayNightComponent } from "./components/DayNightComponent";
+import { DayNightSystem } from "./systems/DayNightSystem";
+import { AmbientLightTagComponent } from "./components/AmbientLightTagComponent";
+import { PlayerTagComponent } from "./components/PlayerTagComponent";
+import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls";
 
-const scenes = [
-  { url: "assets/models/MozAtrium/MozAtrium.glb", startingPosition: new Vector3() },
-  { url: "assets/models/WalrusCave/scene.gltf", startingPosition: new Vector3(7.27, 5.38, 4.01) },
-  { url: "assets/models/SkyCastle/scene.gltf", startingPosition: new Vector3(25.5, 25.5, 41.5) },
-  { url: "assets/models/LowPolyWinterScene/scene.gltf", startingPosition: new Vector3(0, 0, 2.76) },
+ const scenes = [
+  { id: "skycastle", url: "assets/models/SkyCastle/scene.gltf", startingPosition: new Vector3(25.5, 25.5, 41.5), startingPlayerRotation: new Euler(0, 1, 0), startingCameraRotation: new Euler(-0.3, 0, 0) },
+  //{ id: "skycastle", url: "assets/models/SkyCastle/scene.gltf", startingPosition: new Vector3(100, 60, 75), startingPlayerRotation: new Euler(0, 1, 0), startingCameraRotation: new Euler(-0.3, 0, 0) },
+  { id: "atrium", url: "assets/models/MozAtrium/MozAtrium.glb", startingPosition: new Vector3(), startingPlayerRotation: new Euler(), startingCameraRotation: new Euler(-0.3, 0, 0) },
+  { id: "cave", url: "assets/models/WalrusCave/scene.gltf", startingPosition: new Vector3(20, 6.59, 1), startingPlayerRotation: new Euler(0, 1.55, 0), startingCameraRotation: new Euler(-0.3, 0, 0) },
+  { id: "winter", url: "assets/models/LowPolyWinterScene/scene.gltf", startingPosition: new Vector3(0, 0, 2.76), startingPlayerRotation: new Euler(), startingCameraRotation: new Euler(-0.3, 0, 0) },
 ];
 
 class ExampleApp extends App {
   async init() {
-    const sceneIndex = Math.round(Math.random() * (scenes.length - 1));
-    const { url: sceneUrl, startingPosition } = scenes[sceneIndex];
+    const qs = new URLSearchParams(location.search);
+
+    let sceneIndex = 0;
+
+    if (qs.has("random")) {
+      sceneIndex = Math.round(Math.random() * (scenes.length - 1));
+    } else if (qs.has("scene")) {
+      sceneIndex = scenes.findIndex((scene) => scene.id === qs.get("scene"))
+    }
+    
+    const sceneInfo = scenes[sceneIndex];
 
     const [_, { scene: gltfScene }, gradientMap] = await Promise.all<void, GLTF, Texture>([
       PhysicsSystem.load(),
       new GLTFLoader()
-        .loadAsync(sceneUrl),
+        .loadAsync(sceneInfo.url),
       new TextureLoader()
         .setPath('assets/textures/gradient/')
         .loadAsync('threeTone.jpg')
     ]);
 
-    //this.renderer.toneMapping = ACESFilmicToneMapping;
+    gradientMap.minFilter = NearestFilter;
+    gradientMap.magFilter = NearestFilter;
+
+
+    const world = this.world;
+
+    world
+      .registerComponent(RotateComponent)
+      .registerComponent(RigidBodyComponent)
+      .registerComponent(AmbientLightTagComponent)
+      .registerComponent(DayNightComponent)
+      .registerComponent(SunlightComponent)
+      .registerComponent(SkyboxComponent);
+    
+    world
+      .registerSystem(DayNightSystem)
+      .registerSystem(RigidBodyInitializationSystem)
+      .registerSystem(PhysicsSystem)
+      .registerSystem(RigidBodyTransformSystem)
+      .registerSystem(RotateSystem)
+      .registerSystem(WebXRSystem)
+      .registerSystem(WebGLRendererSystem);
+
     this.renderer.toneMappingExposure = 1;
     this.renderer.outputEncoding = sRGBEncoding;
     this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.autoUpdate = true;
+    this.renderer.shadowMap.needsUpdate = true;
     this.renderer.shadowMap.type = VSMShadowMap;
+
+    this.player.position.copy(sceneInfo.startingPosition);
+    this.player.rotation.copy(sceneInfo.startingPlayerRotation);
+    this.camera.rotation.copy(sceneInfo.startingCameraRotation);
+
+    const rightHandGrip = this.rightControllerEntity.getComponent(
+      WebXRControllerComponent
+    ).grip;
+    const leftHandGrip = this.leftControllerEntity.getComponent(
+      WebXRControllerComponent
+    ).grip;
+
+    const leftHandObject = new Mesh(
+      new BoxBufferGeometry(0.1, 0.1, 0.1),
+      new MeshBasicMaterial({ color: 0xff0000 })
+    );
+
+    world
+      .createEntity()
+      .addObject3DComponent(
+        new Mesh(
+          new BoxBufferGeometry(0.1, 0.1, 0.1),
+          new MeshBasicMaterial({ color: 0xff0000 })
+        ),
+        rightHandGrip
+      )
+      .addComponent(RotateComponent, { axis: new Vector3(1, 1, 0) });
+
+    world
+      .createEntity()
+      .addObject3DComponent(
+        new Mesh(
+          new BoxBufferGeometry(0.1, 0.1, 0.1),
+          new MeshBasicMaterial({ color: 0x0000ff })
+        ),
+        leftHandGrip
+      );
+
+    this.sceneEntity.addComponent(DayNightComponent);
 
     const vertexShader = `
       varying vec3 vWorldPosition;
@@ -109,84 +193,43 @@ class ExampleApp extends App {
       side: BackSide
     });
 
-    const sky = new Mesh(skyGeo, skyMat);
-    this.scene.add(sky);
+    new PointerLockControls(this.camera)
 
-    this.scene.add(new AmbientLight(0xFFFFFF, 0.3));
+    const skybox = new Mesh(skyGeo, skyMat);
 
+    this.world.createEntity()
+      .addObject3DComponent(skybox, this.sceneEntity)
+      .addComponent(SkyboxComponent);
 
-    const world = this.world;
+    this.world.createEntity()
+      .addObject3DComponent(new AmbientLight(0xFFFFFF, 0.3), this.sceneEntity)
+      .addComponent(AmbientLightTagComponent);
 
-    world
-      .registerComponent(RotateComponent)
-      .registerComponent(RigidBodyComponent);
-    
-    world
-      .registerSystem(RigidBodyInitializationSystem)
-      .registerSystem(PhysicsSystem)
-      .registerSystem(RigidBodyTransformSystem)
-      .registerSystem(RotateSystem)
-      .registerSystem(WebXRSystem)
-      .registerSystem(WebGLRendererSystem)
-      .registerSystem(StaticShadowMapSystem);
+    const light = new DirectionalLight();
+    light.castShadow = true;
+    light.shadow.radius = 4;
+    light.shadow.bias = -0.0002;
+    light.shadow.normalBias = -0.0002;
+    light.shadow.mapSize.width = 1024;
+    light.shadow.mapSize.height = 1024;
+    light.shadow.camera.left = -100;
+    light.shadow.camera.right = 100;
+    light.shadow.camera.top = 100;
+    light.shadow.camera.bottom = -100;
+    light.shadow.camera.near = 0.5;
+    light.shadow.camera.far = 500;
+    // (light as any)["helper"] = new DirectionalLightHelper(light, 10);
 
-    this.player.position.copy(startingPosition);
+    // const cameraHelper = new CameraHelper( light.shadow.camera );
+    // (light as any)["cameraHelper"] = cameraHelper;
+    // this.scene.add( cameraHelper );
 
-    const rightHandGrip = this.rightControllerEntity.getComponent(
-      WebXRControllerComponent
-    ).grip;
-    const leftHandGrip = this.leftControllerEntity.getComponent(
-      WebXRControllerComponent
-    ).grip;
-
-    world
-      .createEntity()
-      .addObject3DComponent(
-        new Mesh(
-          new BoxBufferGeometry(0.1, 0.1, 0.1),
-          new MeshBasicMaterial({ color: 0xff0000 })
-        ),
-        rightHandGrip
-      )
-      .addComponent(RotateComponent, { axis: new Vector3(1, 1, 0) });
+    // this.scene.add((light as any)["helper"]);
 
     world
       .createEntity()
-      .addObject3DComponent(
-        new Mesh(
-          new BoxBufferGeometry(0.1, 0.1, 0.1),
-          new MeshBasicMaterial({ color: 0x0000ff })
-        ),
-        leftHandGrip
-      );
-
-    // const ground = new Mesh(
-    //   new PlaneBufferGeometry(10, 10, 10),
-    //   new MeshBasicMaterial({ color: 0xffffff })
-    // );
-    // ground.rotateX(MathUtils.degToRad(-90));
-
-    // world
-    //   .createEntity()
-    //   .addObject3DComponent(ground, this.sceneEntity)
-    //   .addComponent(RigidBodyComponent, { shape: new ThreePlaneShape(ground) });
-
-    const box = new Mesh(
-      new BoxBufferGeometry(1, 1, 1),
-      new MeshBasicMaterial({ color: 0x00ff00 })
-    );
-
-    box.position.y = 3;
-    box.position.z = -0.5
-
-    world
-      .createEntity()
-      .addObject3DComponent(box, this.sceneEntity)
-      .addComponent(RigidBodyComponent, { shape: new ThreeBoundingBoxShape(box), mass: 1 });
-
-    gradientMap.minFilter = NearestFilter;
-    gradientMap.magFilter = NearestFilter;
-
+      .addObject3DComponent(light, this.sceneEntity)
+      .addComponent(SunlightComponent);
 
     gltfScene.traverse((object) => {
       const mesh = object as Mesh;
@@ -210,30 +253,22 @@ class ExampleApp extends App {
       }
     });
 
-    const light = new DirectionalLight();
-    light.target.position.set(0, 0, 1);
-    light.add(light.target);
-    light.rotation.set(MathUtils.degToRad(58.76), MathUtils.degToRad(20), MathUtils.degToRad(-25.31));
-    light.position.set(35.5, 36.5, 41);
-    light.castShadow = true;
-    light.shadow.bias = -0.00002;
-    light.shadow.normalBias = -0.00002;
-    light.shadow.mapSize.width = 512;
-    light.shadow.mapSize.height = 512;
-    light.shadow.camera.left = -121;
-    light.shadow.camera.right = 173;
-    light.shadow.camera.top = 131;
-    light.shadow.camera.bottom = -202;
-    light.shadow.camera.near = 0.5;
-    light.shadow.camera.far = 500; 
-
-    world
-      .createEntity()
-      .addObject3DComponent(light, this.sceneEntity);
-
     world
       .createEntity()
       .addObject3DComponent(gltfScene, this.sceneEntity);
+
+    const box = new Mesh(
+      new BoxBufferGeometry(1, 1, 1),
+      new MeshBasicMaterial({ color: 0x00ff00 })
+    );
+
+    box.position.y = 3;
+    box.position.z = -0.5
+
+    world
+      .createEntity()
+      .addObject3DComponent(box, this.sceneEntity)
+      .addComponent(RigidBodyComponent, { shape: new ThreeBoundingBoxShape(box), mass: 1 });
   }
 }
 

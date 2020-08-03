@@ -55,7 +55,15 @@ class PhysicsWorker {
   tempTransform: btTransform;
 
   static async initialize() {
-    Ammo = await AmmoModuleFactory();
+    Ammo = await AmmoModuleFactory({
+      locateFile(url) {
+        if (url.endsWith(".wasm")) {
+          return "/vendor/ammo.wasm.wasm";
+        }
+
+        return url;
+      }
+    });
 
     const collisionConfig = new Ammo.btDefaultCollisionConfiguration();
     const dispatcher = new Ammo.btCollisionDispatcher(collisionConfig);

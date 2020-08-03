@@ -11,7 +11,7 @@
   "author": "Robert Long",
   "license": "MIT",
   "dependencies": {
-    "ecsy": "git+https://github.com/MozillaReality/ecsy.git#dev",
+    "ecsy": "^0.3.2",
     "ecsy-three": "git+https://github.com/MozillaReality/ecsy-three.git#dev",
     "three": "^0.118.1"
   },

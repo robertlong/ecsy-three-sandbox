@@ -38,7 +38,7 @@ export class WebXRSystem extends ECSYThreeSystem {
       throw new Error("WebXRSystem requires an InputFrameComponent to write to");
     }
 
-    const systemState = webxrSystemEntity.getComponent(WebXRSystemComponent);
+    const systemState = webxrSystemEntity.getMutableComponent!(WebXRSystemComponent);
 
     if (systemState.initialized) {
       return;
@@ -46,7 +46,7 @@ export class WebXRSystem extends ECSYThreeSystem {
 
     systemState.initialized = true;
 
-    const inputFrame = inputFrameEntity.getComponent(InputFrameComponent).frame;
+    const inputFrame = inputFrameEntity.getComponent!(InputFrameComponent).frame;
 
     const controllerEntities = this.queries.controllerEntities.results;
 
@@ -76,7 +76,7 @@ export class WebXRSystem extends ECSYThreeSystem {
         }
       });
 
-      const controller = entity.getComponent(WebXRControllerComponent);
+      const controller = entity.getComponent!(WebXRControllerComponent);
       inputFrame[controller.id] = {
         select: false,
         squeeze: false

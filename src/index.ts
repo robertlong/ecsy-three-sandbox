@@ -26,6 +26,8 @@ import {
   CameraHelper
 } from "three";
 
+import { AmbientLightTagComponent } from "ecsy-three";
+
 import { GLTFLoader, GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 
 import { App } from "./App";
@@ -45,7 +47,6 @@ import { SunlightComponent } from "./components/SunlightComponent";
 import { SkyboxComponent } from "./components/SkyboxComponent";
 import { DayNightComponent } from "./components/DayNightComponent";
 import { DayNightSystem } from "./systems/DayNightSystem";
-import { AmbientLightTagComponent } from "./components/AmbientLightTagComponent";
 import { PlayerTagComponent } from "./components/PlayerTagComponent";
 import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls";
 
@@ -89,7 +90,6 @@ class ExampleApp extends App {
     world
       .registerComponent(RotateComponent)
       .registerComponent(RigidBodyComponent)
-      .registerComponent(AmbientLightTagComponent)
       .registerComponent(DayNightComponent)
       .registerComponent(SunlightComponent)
       .registerComponent(SkyboxComponent);
@@ -114,10 +114,10 @@ class ExampleApp extends App {
     this.player.rotation.copy(sceneInfo.startingPlayerRotation);
     this.camera.rotation.copy(sceneInfo.startingCameraRotation);
 
-    const rightHandGrip = this.rightControllerEntity.getComponent(
+    const rightHandGrip = this.rightControllerEntity.getComponent!(
       WebXRControllerComponent
     ).grip;
-    const leftHandGrip = this.leftControllerEntity.getComponent(
+    const leftHandGrip = this.leftControllerEntity.getComponent!(
       WebXRControllerComponent
     ).grip;
 

@@ -17,7 +17,7 @@ export class RigidBodyInitializationSystem extends ECSYThreeSystem {
 
     for (let i = 0; i < rigidBodyEntities.length; i++) {
       const entity = rigidBodyEntities[i];
-      const rigidBody = entity.getComponent(RigidBodyComponent);
+      const rigidBody = entity.getMutableComponent!(RigidBodyComponent);
 
       if (rigidBody.id !== 0) {
         continue;

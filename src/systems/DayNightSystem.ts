@@ -3,11 +3,11 @@ import {
   ECSYThreeSystem,
   Object3DComponent,
   SceneTagComponent,
+  AmbientLightTagComponent
 } from "ecsy-three";
 import { DayNightComponent } from "../components/DayNightComponent";
 import { SunlightComponent } from "../components/SunlightComponent";
 import { SkyboxComponent } from "../components/SkyboxComponent";
-import { AmbientLightTagComponent } from "../components/AmbientLightTagComponent";
 import { PlayerTagComponent } from "../components/PlayerTagComponent";
 
 const MS_IN_A_DAY = 8640000;
@@ -47,7 +47,7 @@ export class DayNightSystem extends ECSYThreeSystem {
       const ambientLightEntity = ambientLightEntities[0];
       const playerEntity = playerEntities[0];
 
-      const dayNight = dayNightEntity.getComponent(DayNightComponent);
+      const dayNight = dayNightEntity.getMutableComponent!(DayNightComponent);
       const sunObj = sunlightEntity.getObject3D!() as DirectionalLight;
       const ambientLight = ambientLightEntity.getObject3D!();
       const skybox = skyboxEntity.getObject3D!();

@@ -1,9 +1,5 @@
 import {
   ECSYThreeWorld,
-  Object3DComponent,
-  SceneTagComponent,
-  CameraTagComponent,
-  MeshTagComponent,
   ECSYThreeEntity,
 } from "ecsy-three";
 import {
@@ -54,10 +50,6 @@ export class App {
     this.world = new ECSYThreeWorld();
 
     this.world
-      .registerComponent(Object3DComponent)
-      .registerComponent(SceneTagComponent)
-      .registerComponent(MeshTagComponent)
-      .registerComponent(CameraTagComponent)
       .registerComponent(PlayerTagComponent)
       .registerComponent(WebGLRendererComponent, false)
       .registerComponent(WebXRControllerComponent, false)

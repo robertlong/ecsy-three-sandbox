@@ -12,9 +12,9 @@ export class WebGLRendererSystem extends ECSYThreeSystem {
 
     for (let i = 0; i < entities.length; i++) {
       const entity = entities[i];
-      const component = entity.getComponent!(WebGLRendererComponent);
-      const camera = component.camera.getObject3D!<PerspectiveCamera>();
-      const scene = component.scene.getObject3D!();
+      const component = entity.getComponent(WebGLRendererComponent)!;
+      const camera = component.camera.getObject3D<PerspectiveCamera>()!;
+      const scene = component.scene.getObject3D()!;
       const renderer = component.renderer;
 
       const canvas = renderer.domElement;

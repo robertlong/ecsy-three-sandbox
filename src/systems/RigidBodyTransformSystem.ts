@@ -18,8 +18,8 @@ export class RigidBodyTransformSystem extends ECSYThreeSystem {
 
     for (let i = 0; i < rigidBodyEntities.length; i++) {
       const entity = rigidBodyEntities[i];
-      const rigidBody = entity.getComponent!(RigidBodyComponent);
-      const object3D = entity.getObject3D!();
+      const rigidBody = entity.getComponent(RigidBodyComponent)!;
+      const object3D = entity.getObject3D()!;
 
       if (object3D.parent && object3D.parent.parent) {
         positionVec3.fromArray(rigidBody.position);

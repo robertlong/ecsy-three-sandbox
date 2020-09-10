@@ -47,12 +47,12 @@ export class DayNightSystem extends ECSYThreeSystem {
       const ambientLightEntity = ambientLightEntities[0];
       const playerEntity = playerEntities[0];
 
-      const dayNight = dayNightEntity.getMutableComponent!(DayNightComponent);
-      const sunObj = sunlightEntity.getObject3D!() as DirectionalLight;
-      const ambientLight = ambientLightEntity.getObject3D!();
-      const skybox = skyboxEntity.getObject3D!();
-      const player = playerEntity.getObject3D!();
-      const scene = sceneEntity.getObject3D!();
+      const dayNight = dayNightEntity.getMutableComponent(DayNightComponent)!;
+      const sunObj = sunlightEntity.getObject3D<DirectionalLight>()!;
+      const ambientLight = ambientLightEntity.getObject3D()!;
+      const skybox = skyboxEntity.getObject3D()!;
+      const player = playerEntity.getObject3D()!;
+      const scene = sceneEntity.getObject3D()!;
 
       if (dayNight.shadowCastersUpdated) {
         // TODO: resize the shadow frustum 

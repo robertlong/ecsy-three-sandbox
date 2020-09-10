@@ -86,7 +86,7 @@ export class PhysicsSystem extends System {
 
     for (let i = 0; i < rigidBodyEntities.length; i++) {
       const entity = rigidBodyEntities[i];
-      const rigidBody = entity.getMutableComponent!(RigidBodyComponent);
+      const rigidBody = entity.getMutableComponent(RigidBodyComponent)!;
 
       if (rigidBody.id === 0) {
         const shape = rigidBody.shape;

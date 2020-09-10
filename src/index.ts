@@ -116,10 +116,10 @@ class ExampleApp extends App {
 
     const rightHandGrip = this.rightControllerEntity.getComponent!(
       WebXRControllerComponent
-    ).grip;
+    )!.grip;
     const leftHandGrip = this.leftControllerEntity.getComponent!(
       WebXRControllerComponent
-    ).grip;
+    )!.grip;
 
     const leftHandObject = new Mesh(
       new BoxBufferGeometry(0.1, 0.1, 0.1),
